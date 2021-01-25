@@ -4,10 +4,10 @@ include "mainController.php";
 /**
  * Работа с сессиями. Долна быть здесь, до инициализации любых действий по отображению контента
  */
-if (!$_SESSION['number_of_ref']) {
+if (!$_SESSION) {
     session_start();
 }
-if ($_SESSION['end']) {
+if ($_SESSION) {
     session_destroy();
 }
 
@@ -34,10 +34,16 @@ class index
         if ($_SERVER["REQUEST_URI"] === '/') {
             $_SERVER["REQUEST_URI"] = 'index';
         }
+
+        if ($_SERVER["REQUEST_URI"] === '/edit_accident') {
+            $_SERVER["REQUEST_URI"] = 'editAccident';
+        }
+
         if ($_SERVER['QUERY_STRING']) {
             $_SERVER["REQUEST_URI"] = 'details';
-
+            $_SESSION['get'] = str_replace('submit=','', $_SERVER['QUERY_STRING']);
         }
+
         $start = new mainController();
         $a = ltrim($_SERVER["REQUEST_URI"], '/');
         echo $start->$a();

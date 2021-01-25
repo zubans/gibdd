@@ -84,7 +84,7 @@ class dbConnection
     public function getAllDriversOfAccident(int $id): array
     {
         try {
-            $stm = $this->connection->query("SELECT fio, guilty FROM drivers as d left join accidents as a on a.id = d.accident_id WHERE accident_id={$id}", PDO::FETCH_ASSOC);
+            $stm = $this->connection->query("SELECT d.id, fio, guilty FROM drivers as d left join accidents as a on a.id = d.accident_id WHERE accident_id={$id}", PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             print_r("Error!: " . $e->getMessage() . "<br/>");
             die();
@@ -100,6 +100,21 @@ class dbConnection
     {
         try {
             $stm = $this->connection->query("SELECT * FROM accidents WHERE id={$id}", PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            print_r("Error!: " . $e->getMessage() . "<br/>");
+            die();
+        }
+        return $stm->fetchAll();
+    }
+
+    /**
+     * @param string $id
+     * @return array
+     */
+    public function getCarViaAccidentId(string $id): array
+    {
+        try {
+            $stm = $this->connection->query("select number, owner_id from cars where owner_id in (select id from drivers where accident_id = {$id})", PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             print_r("Error!: " . $e->getMessage() . "<br/>");
             die();
@@ -131,4 +146,79 @@ class dbConnection
 
        return $result;
     }
+
+    public function editAccidentInfo(array $info)
+    {
+        $accident = $this->getAccident($_POST['id']);
+
+       //Обновление информации о виновном водителе
+            $query = "UPDATE `driver` SET `fio` = :name WHERE `accident_id` = :id and guilty = true";
+            $params = [
+                ':id' => $info['id'],
+                ':name' => $info['fio_guilty']
+            ];
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($params);
+            unset($info['fio_guilty']);
+
+            $fioArray =[];
+            $carArray = [];
+        foreach ($info as $key => $item) {
+            if (strpos($key,'fio')) {
+                $fioArray[str_replace('fio', '', $key)] = $item;
+            } elseif (strpos($key,'car_number')) {
+                $carArray[str_replace('car_number', '', $key)] = $item;
+            }
+
+            }
+        //Обновление информации о других водителях
+        foreach ($fioArray as $id => $fio) {
+            $query = "UPDATE `driver` SET `fio` = :name WHERE `accident_id` = :id";
+            $params = [
+                ':id' => $id,
+                ':name' => $fio
+            ];
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($params);
+        }
+
+        //Обновление номера машины
+        foreach ($carArray as $id => $number) {
+            $query = "UPDATE `cars` SET `number` = :number WHERE `owner_id` = :id";
+            $params = [
+                ':number' => $number,
+                ':id' => $id
+            ];
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($params);
+        }
+
+        //Обновление Даты и времени ДТП
+        $query = "UPDATE `accidents` SET `accident_date_time` = :dateTime WHERE `id` = :id";
+        $params = [
+            ':id' => $info['id'],
+            ':dateTime' => $info['accident_date_time']
+        ];
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($params);
+
+        //Обновление причины ДТП
+        $query = "UPDATE `accidents` SET `cause_accident` = :cause_accident WHERE `id` = :id";
+        $params = [
+            ':id' => $info['id'],
+            ':dateTime' => $info['cause_accident']
+        ];
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($params);
+
+        //Обновление адреса ДТП
+        $query = "UPDATE `accidents` SET `accident_address` = :accident_address WHERE `id` = :id";
+        $params = [
+            ':id' => $info['id'],
+            ':accident_address' => $info['accident_address']
+        ];
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($params);
+    }
 }
+
