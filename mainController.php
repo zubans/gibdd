@@ -99,13 +99,37 @@ class mainController
         } elseif (!empty($_SESSION['number_of_ref']) && $_SESSION['number_of_ref'] > 1) {
             if (array_key_exists('fio', $params)) {
                 $params['accident_id'] = $_SESSION['last_insert_id'];
-                $_SESSION['guilty'] = $params['guilty'] === 'on';
-                $this->conn->insertWithKeys('drivers', $params);
+                $params['guilty'] = $params['guilty'] === 'on';
+                $car_params = [
+                    "mark"    => $params['car_mark'],
+                    'number'  => $params['car_number'],
+                    'color'   => $params['car_color'],
+
+                ];
+                unset($params['car_mark']);
+                unset($params['car_number']);
+                unset($params['car_color']);
+
+                $car_params['owner_id'] = $this->conn->insertWithKeys('drivers', $params);
+var_dump($car_params);
+                $this->conn->insertWithKeys('cars', $car_params);
             }
             $_SESSION['number_of_ref'] -= 1;
         } else {
             $params['accident_id'] = $_SESSION['last_insert_id'];
-            $this->conn->insertWithKeys('drivers', $params);
+            $car_params = [
+                "mark"    => $params['car_mark'],
+                'number'  => $params['car_number'],
+                'color'   => $params['car_color'],
+
+            ];
+            unset($params['car_mark']);
+            unset($params['car_number']);
+            unset($params['car_color']);
+
+            $car_params['owner_id'] = $this->conn->insertWithKeys('drivers', $params);
+            $this->conn->insertWithKeys('cars', $car_params);
+
             unset($_SESSION);
             $_SERVER["REQUEST_URI"] = 'index';
             $render = $this->index();

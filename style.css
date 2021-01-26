@@ -42,6 +42,10 @@ ul li:hover {
     transform: scale(1.1);
 }
 
+input {
+    background-color: #c5c5c5;
+}
+
 .body_place {
     position: absolute;
     left: 10px;

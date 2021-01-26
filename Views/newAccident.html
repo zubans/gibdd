@@ -1,17 +1,28 @@
 <div class="body_place">
     <form action="addDrivers" method="post">
         <label for="accident_date_time">Дата и время ДТП</label>
-        <input id="accident_date_time" name="accident_date_time" type="datetime-local" size="25">
+        <input id="accident_date_time" name="accident_date_time" type="datetime-local" size="25" required>
 
         <label for="place">Место ДТП</label>
-        <input id="place" name="accident_address" type="text" size="40">
+        <input id="place" name="accident_address" type="text" size="40" required>
 
         <label for="cause_accident">Причина ДТП</label>
-        <input id="cause_accident" name="cause_accident" type="text" size="40">
+        <input id="cause_accident" name="cause_accident" type="text" size="40" required>
 
         <label for="number_of_ref">Количество участников</label>
-        <input id="number_of_ref" name="number_of_ref" type="number" size="4">
+        <input id="number_of_ref" name="number_of_ref" min="1" value="1" type="number" size="4" required>
 
         <input type="submit" value="Далее">
     </form>
 </div>
+
+<style type="text/css">
+    input {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        box-sizing: border-box;
+        border: 2px solid red;
+        border-radius: 4px;
+    }
+</style>
