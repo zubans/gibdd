@@ -20,7 +20,7 @@ class dbConnection
 
     const
         USER_NAME       = "root",
-        USER_PASSWORD   = "rootpassword"
+        USER_PASSWORD   = "root"
     ;
 
     /**
@@ -29,7 +29,7 @@ class dbConnection
     public function __construct()
     {
         $this->connection = new PDO(
-            "mysql:host=db;dbname=gibdd",
+            "mysql:host=localhost;dbname=gibdd",
             self::USER_NAME,
             self::USER_PASSWORD
         );
