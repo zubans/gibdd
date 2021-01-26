@@ -147,7 +147,11 @@ class dbConnection
        return $result;
     }
 
-    public function editAccidentInfo(array $info)
+    /**
+     * @param array $info
+     * @return array
+     */
+    public function editAccidentInfo(array $info): array
     {
         $accident = $this->getAccident($_POST['id']);
 
@@ -194,10 +198,10 @@ class dbConnection
         }
 
         //Обновление Даты и времени ДТП
-        $query = "UPDATE `accidents` SET `accident_date_time` = :dateTime WHERE `id` = :id";
+        $query = "UPDATE `accidents` SET `accident_date_time` = :accident_date_time WHERE `id` = :id";
         $params = [
             ':id' => $info['id'],
-            ':dateTime' => $info['accident_date_time']
+            ':accident_date_time' => $info['accident_date_time']
         ];
         $stmt = $this->connection->prepare($query);
         $stmt->execute($params);
@@ -206,7 +210,7 @@ class dbConnection
         $query = "UPDATE `accidents` SET `cause_accident` = :cause_accident WHERE `id` = :id";
         $params = [
             ':id' => $info['id'],
-            ':dateTime' => $info['cause_accident']
+            ':cause_accident' => $info['cause_accident']
         ];
         $stmt = $this->connection->prepare($query);
         $stmt->execute($params);
@@ -219,6 +223,32 @@ class dbConnection
         ];
         $stmt = $this->connection->prepare($query);
         $stmt->execute($params);
+
+        $_SESSION = $info;
+        return $info;
+    }
+
+    public function deleteRecordAboutAccident(int $id)
+    {
+        $query = "DELETE FROM `accidents` WHERE `id` = ?";
+        $params = [$id];
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($params);
+    }
+
+
+    /**
+     * @param string $login
+     * @return array
+     */
+    public function getLogin(string $login): array
+    {
+        $stm = $this->connection->prepare('SELECT login, password FROM users where login = :login');
+        $params = [
+            ':login' => $login
+        ];
+        $stm->execute($params);
+        return $stm->fetchAll();
     }
 }
 

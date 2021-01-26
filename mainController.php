@@ -20,6 +20,33 @@ class mainController
         $this->conn = new Common\dbConnection\dbConnection();
     }
 
+
+    public function register(): string
+    {
+        $_SESSION['post'] = $_POST;
+
+        if ($_POST['login'] && $_POST['password'] && !$this->checkLoginPassword()) {
+            $this->conn->insertWithKeys('users',$_POST);
+            $_SESSION['login'] = true;
+            return $this->login();
+        } elseif ($_POST['login'] && $this->checkLoginPassword()) {
+            $_SESSION['login'] = true;
+            $this->index();
+        } else {
+            return $this->renderPageWithoutStylesAndHead('register');
+        }
+    }
+
+    public function login(): string
+    {
+        if ($_POST['login'] && $this->checkLoginPassword()) {
+            $_SESSION['login'] = true;
+           return $this->index();
+        } else {
+            return $this->renderPageWithoutStylesAndHead('login');
+        }
+    }
+
     /**
      * Эта функция берет параметры из БД о всех ДТП и отображает на главной странице
      *
@@ -28,8 +55,6 @@ class mainController
      */
     public function index(): string
     {
-//        var_dump($this->conn->findRecordWithTwoVaribles('drivers','fio', 'accident_id', 'guilty', 95, 1)[0]['fio']);
-
         $basTemplate = $this->renderPage('mainView');
         $allIncidents = $this->conn->getAllRecordsFromTable('accidents', 100);
 
@@ -107,15 +132,16 @@ class mainController
         $accident = $this->conn->getAccident($id);
         $drivers = $this->conn->getAllDriversOfAccident($id);
         $car = $this->conn->getCarViaAccidentId($id);
-var_dump($car);
-        $table = '<table>
+        $tableHeader = '<table>
                 <th>ГосНомер автомобиля</th>
                 <th>Дата и время ДТП</th>
                 <th>Номер справки в ГИБДД</th>
                 <th>Участники</th>
                 <th>Повреждения</th>
                 <th>Обновить</th>
+                <th>Выгрузить отчет</th>
                 <tr>';
+        $table = '';
         $table .= '<form action="edit_accident" method="post"><input type="hidden" name="id" value="' . $id . '">';
         $sheetOfDrivers = '';
 
@@ -134,7 +160,7 @@ var_dump($car);
                 $table .= '</td>';
             } elseif ($key !== 'id') {
                 if ($key === 'accident_date_time') { // если поле о дате и времени
-                    $table .= '<td><input type="text" name="accident_date_time" value="' . date("d.m.Y h:m", strtotime($row) ) . '"></td>';
+                    $table .= '<td><input type="text" name="accident_date_time" value="' . $row . '"></td>';
                 } elseif ($key === 'cause_accident') {
                     $table .= '<td><input type="text" name="cause_accident" value="' . $row . '"></td>';
                 } elseif ($key === 'accident_address') {
@@ -153,7 +179,7 @@ var_dump($car);
                 }
         }
 
-        $table .= '<td><input type="submit"></td></form></tr></table>';
+        $table .= '<td><input type="submit"></td><td></form><form action="getReport" method="post"><button name="report" value="' . $id . '">Скачать отчет</button></form></td></tr></table>';
 
         foreach ($drivers as $driver) {
             if ($driver['guilty']) {
@@ -168,9 +194,44 @@ var_dump($car);
         $accident[0]['number_of_ref'] = $sheetOfDrivers;
         $header[2] = $accident[0];
 
-//        $this->exportToCSV($header,"DTP1.csv");
 
-        return html_entity_decode($this->replaceTag($this->renderPage('details'), htmlentities($table)));
+        return html_entity_decode($this->replaceTag($this->renderPage('details'), htmlentities($tableHeader . $table)));
+    }
+
+    /**
+     * @return void
+     */
+    public function getReport(): void
+    {
+        $id = $_POST['report'];
+        $accident = $this->conn->getAccident($id);
+        $drivers = $this->conn->getAllDriversOfAccident($id);
+        $sheetOfDrivers = '';
+
+
+        foreach ($drivers as $driver) {
+            if ($driver['guilty']) {
+                $sheetOfDrivers .= $driver['fio'] . '(Виновник); ';
+            } else {
+                $sheetOfDrivers .= $driver['fio'] . '; ';
+            }
+        }
+
+        $header[0] = ['Номер Справки ГИБДД', 'Дата и время ДТП', 'Номер справки в ГИБДД', 'Участники', 'Место ДТП'];
+        $header[1] = [];
+        $accident[0]['number_of_ref'] = $sheetOfDrivers;
+        $header[2] = $accident[0];
+
+        $this->exportToCSV($header,"DTP1.csv");
+    }
+
+    /**
+     * @return string
+     */
+    public function deleteRecord(): string
+    {
+        $this->conn->deleteRecordAboutAccident($_SESSION['get']);
+        return $this->index();
     }
 
     public function editAccident(): string
@@ -235,7 +296,7 @@ var_dump($car);
             }
             $guiltyFio = $this->conn->getGuiltyFio($id)[0][0];
             $result .= "<td>" . $guiltyFio . "</td>";
-            $result .= '<td><button name="submit" value=' . $id . '>Подробнее</button></td>';
+            $result .= '<td><button name="submit" value=' . $id . '>Подробнее</button><button name="delete" value="' . $id . '">Удалить</button></td>';
             $result = $result . "</tr>";
         }
         $result = $result . '</table></form>';
@@ -269,5 +330,12 @@ var_dump($car);
         }
 
         fclose($fp);
+    }
+
+    private function checkLoginPassword(): bool
+    {
+        $user = $this->conn->getLogin($_POST['login']);
+        var_dump($user);
+        return $user[0]['password'] && $_POST['password'] === $user[0]['password'];
     }
 }

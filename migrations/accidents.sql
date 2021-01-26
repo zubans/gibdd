@@ -47,6 +47,18 @@ create table gibdd.cars
     ENGINE=InnoDB
     AUTO_INCREMENT=20;
 
+
+create table gibdd.users
+    (
+        id int not null auto_increment,
+        login varchar(50),
+        password varchar(100),
+        PRIMARY KEY(id)
+)
+    COLLATE='utf8_general_ci'
+    ENGINE=InnoDB
+    AUTO_INCREMENT=20;
+
 select * from drivers where accident_id = 95 and guilty = 1;
 SELECT fio FROM drivers as d left join accidents as a on a.id = d.accident_id WHERE accident_id=95 AND guilty=1
 SELECT * FROM accidents  WHERE id='95';
@@ -57,3 +69,5 @@ select number from cars where owner_id in (select id from drivers where accident
 insert into gibdd.drivers(fio, drive_license, insurance, accident_id) values ('Зюбан Сергей Дмитриевич','333','234','58');
 INSERT INTO gibdd.drivers (fio,drive_license, insurance) VALUES ('Зюбан Сергей Дмитриевич','234','345');
 INSERT INTO gibdd.accidents (accident_date_time,accident_address,cause_accident,number_of_ref) VALUES ('2021-01-24T14:58:00', 'Ленина 1', 'Пьянка','2');
+
+SELECT login, password FROM users WHERE login='test'
